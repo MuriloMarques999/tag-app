@@ -1,7 +1,9 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { styles } from './lotesAgendados';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import api from '../api';
 
 export default function LotesAgendados() {
 
@@ -14,16 +16,20 @@ export default function LotesAgendados() {
 
   if (!fontsLoaded) return null;
 
-  const lotes = [
-    { id: 1, ref: 'ETQ123', modelo: 'X', quantidade: 100, prioridade: 'Baixa' },
-    { id: 2, ref: 'ETQ456', modelo: 'X', quantidade: 100, prioridade: 'Baixa' },
-    { id: 3, ref: 'ETQ789', modelo: 'X', quantidade: 100, prioridade: 'Baixa' },
-    { id: 4, ref: 'ETQ123', modelo: 'Y', quantidade: 150, prioridade: 'Média' },
-    { id: 5, ref: 'ETQ456', modelo: 'Y', quantidade: 150, prioridade: 'Média' },
-    { id: 6, ref: 'ETQ789', modelo: 'Y', quantidade: 90, prioridade: 'Média' },
-    { id: 7, ref: 'ETQ123', modelo: 'Y', quantidade: 80, prioridade: 'Média' },
-    { id: 8, ref: 'ETQ456', modelo: 'Y', quantidade: 120, prioridade: 'Média' },
-  ];
+  const [lotes, setLotes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const data: any = await api.getRequests();
+        setLotes(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setLotes([]);
+      } finally { setLoading(false); }
+    })();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -39,8 +45,9 @@ export default function LotesAgendados() {
 
       {/* LISTA */}
       <ScrollView showsVerticalScrollIndicator={false}>
+        {loading ? <ActivityIndicator size="large" /> : null}
         {lotes.map((lote) => (
-          <View key={lote.id} style={styles.card}>
+          <View key={lote.request_id} style={styles.card}>
 
             {/* FAIXA SUPERIOR */}
             <View style={styles.cardHeader}>
@@ -50,9 +57,9 @@ export default function LotesAgendados() {
             {/* CONTEÚDO */}
             <View style={styles.cardContent}>
               <View>
-                <Text style={styles.text}>Modelo: {lote.modelo}</Text>
-                <Text style={styles.text}>Quantidade: {lote.quantidade}</Text>
-                <Text style={styles.text}>Prioridade: {lote.prioridade}</Text>
+                <Text style={styles.text}>Ref: {lote.reference_code || lote.ref}</Text>
+                <Text style={styles.text}>Itens: {lote.total_items ?? '—'}</Text>
+                <Text style={styles.text}>Status: {lote.status}</Text>
               </View>
 
               {/* BOTÃO SETA */}
@@ -65,6 +72,10 @@ export default function LotesAgendados() {
           </View>
         ))}
       </ScrollView>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={() => router.replace('/operator')}>
+        <Text style={styles.buttonText}>Sair</Text>
+      </TouchableOpacity>
 
     </View>
   );

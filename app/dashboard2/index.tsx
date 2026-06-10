@@ -84,14 +84,12 @@ export default function NovoAgendamento() {
       </View>
 
       {/* Botões */}
-      <TouchableOpacity style={styles.buttonPrimary}>
-        <Text style={styles.buttonText}
-        onPress={() => router.push ('/dashboard3')}>Confirmar</Text>
+      <TouchableOpacity style={styles.buttonPrimary} onPress={() => router.push('/dashboard3')}>
+        <Text style={styles.buttonText}>Confirmar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.buttonSecondary}>
-        <Text style={styles.buttonText}
-        onPress={() => router.push ('/dashboard')}>Cancelar</Text>
+      <TouchableOpacity style={styles.buttonSecondary} onPress={() => router.push('/dashboard')}>
+        <Text style={styles.buttonText}>Cancelar</Text>
       </TouchableOpacity>
 
     </View>

@@ -74,13 +74,11 @@ export default function Operator() {
         </View>
         </ScrollView>
 
-        <TouchableOpacity style={styles.buttonCreate} >
-            <Text style={styles.buttonFont}
-            onPress={() => router.push('/lotesAgendados')}>Login</Text>
+        <TouchableOpacity style={styles.buttonCreate} onPress={() => router.push('/lotesAgendados')}>
+            <Text style={styles.buttonFont}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton} >
-            <Text style={styles.backButtonFont}
-            onPress={() => router.push ('/')}  >Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/') }>
+            <Text style={styles.backButtonFont}>Back</Text>
         </TouchableOpacity>
         </View>
 

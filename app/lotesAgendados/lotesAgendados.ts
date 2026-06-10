@@ -73,4 +73,19 @@ export const styles = StyleSheet.create({
     fontFamily: 'PoppinsSemiBold',
   },
 
+  logoutButton: {
+    marginTop: 15,
+    backgroundColor: '#C0392B',
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  buttonText: {
+    color: '#DDD7C9',
+    fontSize: 18,
+    fontFamily: 'PoppinsSemiBold',
+  },
+
 });

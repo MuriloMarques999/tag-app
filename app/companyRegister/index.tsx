@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, ImageStyle } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, ImageStyle, Alert } from 'react-native';
 import { styles } from './companyRegister';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useState } from 'react'; // importando para utilizar 
 import { Ionicons } from '@expo/vector-icons'; // para icons
+import api from '../api';
 
 
 export default function CompanyRegister() {
@@ -20,6 +21,11 @@ export default function CompanyRegister() {
         const router = useRouter();
     
         const [mostrarSenha, setMostrarSenha] = useState(false); // para mostrar a senha
+        const [name, setName] = useState('');
+        const [email, setEmail] = useState('');
+        const [company, setCompany] = useState('');
+        const [password, setPassword] = useState('');
+        const [loading, setLoading] = useState(false);
 
     return (
         <View style={styles.container}>
@@ -40,21 +46,32 @@ export default function CompanyRegister() {
             <Text style={styles.titleFormInput}>Nome</Text>
             <TextInput 
             style={styles.formInput} 
-            placeholder='Digite seu nome completo'/>
+            placeholder='Digite seu nome completo'
+            value={name}
+            onChangeText={setName}
+            />
         </View>
         
         <View style={styles.inputGroup}>
             <Text style={styles.titleFormInput}>Email</Text>
             <TextInput 
             style={styles.formInput} 
-            placeholder='Ex.:name@company.com'/>
+            placeholder='Ex.:name@company.com'
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            />
         </View>
 
         <View style={styles.inputGroup}>
             <Text style={styles.titleFormInput}>Empresa</Text>
             <TextInput 
             style={styles.formInput} 
-            placeholder='Nome da empresa'/>
+            placeholder='Nome da empresa'
+            value={company}
+            onChangeText={setCompany}
+            />
         </View>
 
         <View style={styles.inputGroup}>
@@ -65,6 +82,8 @@ export default function CompanyRegister() {
                     style={styles.formInput} 
                     placeholder='Digite uma senha'
                     secureTextEntry={!mostrarSenha}
+                    value={password}
+                    onChangeText={setPassword}
                 />
                 <TouchableOpacity
                     style={styles.icon}
@@ -83,13 +102,25 @@ export default function CompanyRegister() {
 
         <TouchableOpacity 
             style={styles.buttonCreate}
-            onPress={() => router.push('/dashboard')}
+            onPress={async () => {
+                try {
+                    setLoading(true);
+                    const res: any = await api.register(name, email, password, 'admin');
+                    if (res.user_id) {
+                        Alert.alert('Sucesso', 'Conta criada. Faça login.');
+                        router.replace('/companyLogin/companyLogin');
+                    } else {
+                        Alert.alert('Erro', res.message || 'Falha ao criar conta');
+                    }
+                } catch (err: any) {
+                    Alert.alert('Erro', err.message || 'Falha ao criar conta');
+                } finally { setLoading(false); }
+            }}
         >
-            <Text style={styles.buttonFont}>Criar conta da empresa</Text>
+            <Text style={styles.buttonFont}>{loading ? 'Criando...' : 'Criar conta da empresa'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton}>
-            <Text style={styles.backButtonFont}
-            onPress={() => router.push ('/')}  >Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/') }>
+            <Text style={styles.backButtonFont}>Back</Text>
         </TouchableOpacity>
         </View>
 

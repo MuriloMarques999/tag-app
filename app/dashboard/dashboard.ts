@@ -122,6 +122,21 @@ export const styles = StyleSheet.create({
     fontFamily: 'PoppinsSemiBold',
   },
 
+  logoutButton: {
+    marginTop: 15,
+    backgroundColor: '#C0392B',
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  logoutText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontFamily: 'PoppinsSemiBold',
+  },
+
   cardMedium: {
     backgroundColor: '#6F8F8F',
     borderRadius: 20,

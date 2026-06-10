@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { styles } from './dashboard';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
+import api from '../api';
 
 export default function Dashboard() {
 
@@ -61,9 +62,12 @@ export default function Dashboard() {
       </View>
 
       {/* Botão */}
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}
-        onPress={() => router.push ('/dashboard2')}>Registrar novo lote</Text>
+      <TouchableOpacity style={styles.button} onPress={() => router.push('/dashboard2')}>
+        <Text style={styles.buttonText}>Registrar novo lote</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={() => { api.logout(); router.replace('/companyLogin/companyLogin'); }}>
+        <Text style={styles.logoutText}>Sair</Text>
       </TouchableOpacity>
 
     </View>

@@ -46,9 +46,8 @@ export default function Choose() {
       </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.backButton} >
-        <Text style={styles.backButtonFont}
-        onPress={() => router.push ('/')}>Back</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+        <Text style={styles.backButtonFont}>Back</Text>
       </TouchableOpacity>
 
     </View>

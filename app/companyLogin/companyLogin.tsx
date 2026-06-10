@@ -1,11 +1,12 @@
 // Tela de login do ADMIN
 
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, ImageStyle } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, ImageStyle, Alert } from 'react-native';
 import { styles } from './companyLogin';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useState } from 'react'; // importando para utilizar 
 import { Ionicons } from '@expo/vector-icons'; // para icons
+import api, { setToken } from '../api';
 
 
 export default function CompanyLogin() {
@@ -22,6 +23,9 @@ export default function CompanyLogin() {
         const router = useRouter();
     
         const [mostrarSenha, setMostrarSenha] = useState(false); // para mostrar a senha
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [loading, setLoading] = useState(false);
 
     return (
         <View style={styles.container}>
@@ -47,7 +51,12 @@ export default function CompanyLogin() {
             <Text style={styles.titleFormInput}>Email</Text>
             <TextInput 
             style={styles.formInput} 
-            placeholder='Ex.:name@company.com'/>
+            placeholder='Ex.:name@company.com'
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            />
         </View>
 
         <View style={styles.inputGroup}>
@@ -58,6 +67,8 @@ export default function CompanyLogin() {
                     style={styles.formInput} 
                     placeholder='Ex.: Digite sua senha'
                     secureTextEntry={!mostrarSenha}
+                    value={password}
+                    onChangeText={setPassword}
                 />
                 <TouchableOpacity
                     style={styles.icon}
@@ -78,13 +89,25 @@ export default function CompanyLogin() {
 
         <TouchableOpacity 
             style={styles.buttonCreate}
-            onPress={() => router.replace('/dashboard')}
+            onPress={async () => {
+                try {
+                    setLoading(true);
+                    const res: any = await api.login(email, password);
+                    if (res.token) {
+                        setToken(res.token);
+                        router.replace('/dashboard');
+                    } else {
+                        Alert.alert('Erro', res.message || 'Falha no login');
+                    }
+                } catch (err: any) {
+                    Alert.alert('Erro', err.message || 'Falha no login');
+                } finally { setLoading(false); }
+            }}
         >
-            <Text style={styles.buttonFont}>Login</Text>
+            <Text style={styles.buttonFont}>{loading ? 'Entrando...' : 'Login'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton} >
-            <Text style={styles.backButtonFont}
-            onPress={() => router.push ('/choice/choice')}>Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/choice/choice')}>
+            <Text style={styles.backButtonFont}>Back</Text>
         </TouchableOpacity>
         </View>
 
