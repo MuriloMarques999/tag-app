@@ -17,6 +17,17 @@ async function request(path: string, opts: RequestInit = {}) {
   try { return JSON.parse(text); } catch { return text; }
 }
 
+async function requestRaw(url: string, opts: RequestInit = {}) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as Record<string,string> || {}) };
+  const res = await fetch(url, { ...opts, headers });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return text; }
+}
+
+export async function getEsp32Status() {
+  return requestRaw('http://localhost:3000/api/status');
+}
+
 export async function login(email: string, password: string) {
   return request('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
@@ -37,4 +48,4 @@ export async function getTags() {
   return request('/api/tags');
 }
 
-export default { setToken, logout, login, register, getRequests, getRequest, getTags };
+export default { setToken, logout, login, register, getRequests, getRequest, getTags, getEsp32Status };

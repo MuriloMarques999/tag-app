@@ -1,0 +1,20 @@
+{
+  "name": "integrador",
+  "version": "1.0.0",
+  "description": "Microsserviço volátil ESP32-CAM — leitura de QR Code",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^5.2.1",
+    "jimp": "^1.6.1",
+    "jsqr": "^1.4.0"
+  }
+}

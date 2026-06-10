@@ -1,0 +1,414 @@
+================================================================================
+PROMPT DE INTEGRAÇÃO — MICROSSERVIÇO ESP32-CAM × BACKEND PRINCIPAL DO APLICATIVO
+================================================================================
+
+Você é o agente de IA responsável pelo BACKEND PRINCIPAL do aplicativo.
+Este documento descreve, com precisão técnica, como funciona o microsserviço
+volátil de leitura de QR Code (ESP32-CAM + Node.js) e como você deve
+implementar a comunicação correta entre os dois sistemas.
+
+Leia tudo antes de escrever código. Não assuma banco de dados neste serviço.
+Não faça o ESP32 falar diretamente com o seu backend.
+
+================================================================================
+1. PAPEL DE CADA COMPONENTE (VISÃO GERAL)
+================================================================================
+
+┌─────────────┐     POST JSON (imagem Base64)      ┌──────────────────────────┐
+│  ESP32-CAM  │ ─────────────────────────────────► │ Microsserviço Node.js    │
+│  (Arduino)  │         a cada ~2,5 segundos       │ (contagem_etiquetas/)    │
+└─────────────┘                                    │ Porta: 3000              │
+                                                   │ SEM banco de dados       │
+                                                   │ Estado só em RAM         │
+                                                   └───────────┬──────────────┘
+                                                               │
+                     CONFIRMAÇÃO DE LEITURA (você implementa)  │
+                     quando QR for decodificado com sucesso    ▼
+                                                   ┌──────────────────────────┐
+                                                   │ BACKEND PRINCIPAL        │
+                                                   │ (aplicativo — seu escopo)│
+                                                   │ Com banco, usuários, etc.│
+                                                   └──────────────────────────┘
+
+RESPONSABILIDADES:
+
+  • ESP32-CAM: captura foto JPEG, codifica Base64, envia HTTP POST.
+  • Microsserviço Node: decodifica QR (jimp + jsqr), mantém contador em RAM,
+    expõe dashboard local e responde ao ESP32 com sucesso/falha.
+  • Backend principal (VOCÊ): recebe e persiste a CONFIRMAÇÃO de que um QR
+    foi lido com sucesso, com o conteúdo decodificado (ex.: tag_code).
+
+O ESP32 NUNCA chama o backend principal. Apenas o microsserviço (ou um
+processo que observe o microsserviço) deve notificar o backend principal.
+
+================================================================================
+2. ESTRUTURA DO PROJETO (ONDE ESTÁ CADA COISA)
+================================================================================
+
+Repositório raiz: Integrador-arduino/
+
+  Integrador-arduino.ino
+    → Firmware do ESP32-CAM (WiFi, câmera, envio HTTP).
+
+  contagem_etiquetas/
+    package.json          → Dependências: express, jimp, jsqr apenas.
+    src/server.js         → ÚNICO arquivo de lógica do servidor Node.
+                            Toda API e estado volátil estão aqui.
+
+Pastas removidas (não existem mais — não recrie):
+  src/db.js, src/controllers/, src/routes/
+
+Comando para subir o microsserviço:
+  cd contagem_etiquetas
+  npm start
+  → Executa: node src/server.js
+
+================================================================================
+3. FLUXO DE DADOS PASSO A PASSO
+================================================================================
+
+PASSO 1 — ESP32 captura e envia (loop não bloqueante)
+  Arquivo: Integrador-arduino.ino
+  Função: sendPhoto() (linhas ~114–148)
+  Intervalo: SEND_INTERVAL_MS = 2500 ms (variável linha 18)
+  URL fixa no firmware: serverUrl (linha 15)
+    Exemplo atual: "http://192.168.15.10:3000/scan-image"
+    → Deve apontar para o IP:porta do PC/servidor onde roda o Node.
+
+  Corpo HTTP POST (application/json), ÚNICO campo:
+    { "image": "<string_base64_jpeg>" }
+
+  O ESP32 imprime no Serial Monitor:
+    - HTTP Response Code (200, 422, 400, 500)
+    - Corpo JSON da resposta (string completa)
+
+PASSO 2 — Node recebe e processa
+  Arquivo: contagem_etiquetas/src/server.js
+  Rota: POST /scan-image (handler linhas 179–218)
+  Função auxiliar: decodificarQr(base64) (linhas 15–22)
+    → Buffer.from(base64) → Jimp.read → jsQR na bitmap RGBA.
+
+PASSO 3 — Atualização de estado em RAM (sempre que chega imagem)
+  Variável: ultimaImagemBase64 (linha 11, atualizada linha 190)
+    → Usada pelo dashboard para mostrar último frame.
+
+PASSO 4 — Decisão sucesso vs falha na leitura do QR
+
+  FALHA (QR não encontrado na imagem):
+    - NÃO incrementa contadorLote
+    - NÃO altera ultimoQrLido (permanece valor anterior)
+    - HTTP 422 + JSON (linhas 194–199)
+
+  SUCESSO (QR decodificado):
+    - ultimoQrLido = qr.data          (linha 202)
+    - contadorLote += 1               (linha 203)
+    - HTTP 200 + JSON (linhas 205–210)
+    - ★ ESTE É O MOMENTO EM QUE O BACKEND PRINCIPAL DEVE SER NOTIFICADO ★
+      (integração ainda não codificada — ver seção 7)
+
+PASSO 5 — Dashboard local (operador humano, não substitui seu backend)
+  GET /dashboard → HTML com polling
+  GET /api/status → JSON para o navegador (linhas 25–33)
+
+================================================================================
+4. VARIÁVEIS, PORTA E FUNÇÕES — MAPA EXATO (server.js)
+================================================================================
+
+PORTA DO SERVIÇO:
+  const PORT = 3000;                    // linha 6
+  app.listen(PORT, '0.0.0.0', ...)      // linhas 220–223
+  → Escuta em todas as interfaces (0.0.0.0). Acesso via IP da máquina na LAN.
+
+ESTADO VOLÁTIL (perdido ao reiniciar o processo Node):
+
+  let contadorLote = 0;                 // linha 9
+    Significado: total de leituras de QR bem-sucedidas desde o último start.
+    Incremento: somente no bloco de sucesso de POST /scan-image (linha 203).
+
+  let ultimoQrLido = '(aguardando leitura)';  // linha 10
+    Significado: string bruta retornada pelo jsQR na última leitura OK.
+    Formato típico esperado no QR físico: JSON textual, ex.:
+      {"tag_code": "A1B3C3"}
+    O microsserviço NÃO faz parse desse JSON hoje; repassa qr.data como string.
+
+  let ultimaImagemBase64 = null;        // linha 11
+    Significado: última imagem recebida (com ou sem QR lido).
+    Uso: feed visual do dashboard, não enviar ao backend principal por padrão.
+
+MIDDLEWARE:
+  express.json({ limit: '50mb' })       // linha 13
+    → Necessário porque imagens Base64 são grandes.
+
+FUNÇÃO DE DECODIFICAÇÃO:
+  decodificarQr(base64)                 // linhas 15–22
+    Retorno: { qr, image }
+    qr.data → string do conteúdo do QR (null/undefined se falhou).
+
+================================================================================
+5. CONTRATO HTTP — ENDPOINTS (REFERÊNCIA PARA O BACKEND)
+================================================================================
+
+──────────────────────────────────────────────────────────────────────────────
+5.1 POST /scan-image  [PRINCIPAL — origem da confirmação de leitura]
+──────────────────────────────────────────────────────────────────────────────
+
+Quem chama: apenas o ESP32-CAM (não o app mobile diretamente).
+
+Request:
+  Content-Type: application/json
+  Body:
+    {
+      "image": "<base64 da foto JPEG>"
+    }
+
+Responses:
+
+  A) SUCESSO — QR lido e contador incrementado
+     Status: 200
+     Body:
+       {
+         "success": true,
+         "message": "Leitura registrada com sucesso",
+         "qr_data": "<conteúdo bruto do QR>",
+         "contador": <número inteiro após incremento>
+       }
+
+     ★ REGRA PARA O BACKEND PRINCIPAL:
+       Trate "success": true como CONFIRMAÇÃO OFICIAL de leitura válida.
+       O campo "qr_data" é a carga que você deve interpretar (JSON ou texto).
+       O campo "contador" é informativo/local; use seu próprio ID de lote no DB.
+
+  B) FALHA — imagem recebida mas QR não detectado
+     Status: 422
+     Body:
+       {
+         "success": false,
+         "message": "QR Code não detectado — ajuste o enquadramento da câmera",
+         "contador": <valor atual sem incremento>
+       }
+
+     ★ NÃO registre separação/estoque no backend. Apenas log opcional.
+
+  C) ERRO — body inválido
+     Status: 400
+     Body: { "success": false, "message": "Campo \"image\" (Base64) é obrigatório" }
+
+  D) ERRO — exceção no processamento
+     Status: 500
+     Body: { "success": false, "message": "Erro ao processar a imagem" }
+
+──────────────────────────────────────────────────────────────────────────────
+5.2 GET /api/status  [AUXILIAR — polling do dashboard / debug]
+──────────────────────────────────────────────────────────────────────────────
+
+Quem chama: navegador no GET /dashboard (script interno, polling 1s).
+
+Response 200:
+  {
+    "contador": <contadorLote>,
+    "ultimoQr": <ultimoQrLido>,
+    "imagem": "data:image/jpeg;base64,..." | null
+  }
+
+Uso sugerido para o backend principal:
+  - Apenas em desenvolvimento ou health-check local.
+  - NÃO use como fonte primária em produção: só reflete o ÚLTIMO estado,
+    não envia histórico, não garante entrega se o Node reiniciar.
+
+──────────────────────────────────────────────────────────────────────────────
+5.3 GET /dashboard  [SOMENTE UI HUMANA — calibração da câmera]
+──────────────────────────────────────────────────────────────────────────────
+
+Página HTML estática embutida em server.js (linhas 36–176).
+Não é API para o backend principal.
+
+================================================================================
+6. CONTEÚDO DO QR CODE — O QUE O BACKEND DEVE EXTRAIR
+================================================================================
+
+O microsserviço devolve em "qr_data" a string EXATA lida do QR, sem validação
+de schema. Exemplo real esperado nas etiquetas:
+
+  {"tag_code": "A1B3C3"}
+
+No backend principal, após receber confirmação com success=true:
+
+  1. Fazer JSON.parse(qr_data) com try/catch.
+  2. Ler o campo tag_code (ou fallback se for texto puro).
+  3. Validar se a tag existe no seu banco / pertence ao lote ativo.
+  4. Registrar a separação (timestamp, operador, device_id, request_id, etc.).
+  5. Retornar resposta ao fluxo do app (se houver chamada síncrona).
+
+Se qr_data não for JSON válido, tratar como código literal (string).
+
+================================================================================
+7. COMO O BACKEND PRINCIPAL DEVE SE CONECTAR (PADRÃO RECOMENDADO)
+================================================================================
+
+HOJE (estado atual do código):
+  O microsserviço NÃO chama o backend principal automaticamente.
+  A confirmação existe apenas na resposta HTTP de POST /scan-image (para o
+  ESP32) e espelhada em RAM (contadorLote, ultimoQrLido).
+
+VOCÊ DEVE IMPLEMENTAR UMA DESTAS ESTRATÉGIAS (ordem de preferência):
+
+──────────────────────────────────────────────────────────────────────────────
+ESTRATÉGIA A — WEBHOOK PUSH (RECOMENDADA)
+──────────────────────────────────────────────────────────────────────────────
+
+Quem altera: equipe do microsserviço (uma linha após sucesso em server.js)
+             + você no backend principal (novo endpoint receptor).
+
+No microsserviço, IMEDIATAMENTE APÓS linha 203 (contadorLote += 1), adicionar
+chamada HTTP assíncrona (não bloquear resposta ao ESP32), por exemplo:
+
+  POST {BACKEND_URL}/api/integrations/esp32/reading-confirmed
+  Headers: Authorization: Bearer <token>, Content-Type: application/json
+  Body:
+    {
+      "success": true,
+      "qr_data": "<mesmo valor retornado ao ESP32>",
+      "contador_local": <contadorLote>,
+      "read_at": "<ISO8601>",
+      "source": "esp32-cam-integrador"
+    }
+
+No backend principal, criar endpoint idempotente:
+  - Validar token/API key.
+  - Parsear qr_data → tag_code.
+  - Ignorar duplicatas rápidas (mesmo tag_code em janela de 2–3 s), pois o
+    ESP32 envia foto a cada 2,5 s e pode repetir o mesmo QR no enquadramento.
+  - Responder 200 { "accepted": true } rapidamente.
+
+Variáveis de ambiente sugeridas no Node (microsserviço):
+  BACKEND_WEBHOOK_URL=https://seu-dominio/api/integrations/esp32/reading-confirmed
+  BACKEND_API_KEY=...
+
+──────────────────────────────────────────────────────────────────────────────
+ESTRATÉGIA B — BACKEND ESCUTA /scan-image VIA PROXY (NÃO RECOMENDADA)
+──────────────────────────────────────────────────────────────────────────────
+
+Colocar um reverse proxy que duplique tráfego é complexo e desnecessário.
+Prefira webhook na estratégia A.
+
+──────────────────────────────────────────────────────────────────────────────
+ESTRATÉGIA C — POLLING GET /api/status (SOMENTE DEV)
+──────────────────────────────────────────────────────────────────────────────
+
+Seu backend faz GET http://<ip-node>:3000/api/status a cada N segundos,
+compara ultimoQr e contador com valores anteriores, e dispara lógica se
+contador subiu.
+
+Problemas: perda de eventos se Node reiniciar, latência, acoplamento frágil.
+Não usar em produção.
+
+================================================================================
+8. ESP32 — REFERÊNCIA RÁPIDA (PARA CONTEXTO, NÃO ALTERAR NO BACKEND)
+================================================================================
+
+Arquivo: Integrador-arduino.ino
+
+  serverUrl (linha 15)     → URL completa do POST /scan-image no Node.
+  SEND_INTERVAL_MS (18)  → 2500 ms entre envios.
+  FRAMESIZE_QVGA (76)      → 320×240; pode subir para FRAMESIZE_VGA se borrado.
+
+  sendPhoto() monta: {"image":"..."}  (linha 134)
+  Não envia: lote_id, user_id, request_id — isso é responsabilidade do
+  backend principal associar o contexto da sessão de separação ativa.
+
+O ESP32 ignora semanticamente o JSON de resposta além do Serial.print; o
+backend principal NÃO deve depender do ESP32 repassar confirmação.
+
+================================================================================
+9. REGRAS DE NEGÓCIO QUE O BACKEND DEVE RESPEITAR
+================================================================================
+
+  1. success=true em POST /scan-image (ou no webhook derivado) = única
+     confirmação de "QR executado/lido com sucesso" para incrementar estoque
+     ou avançar separação.
+
+  2. success=false com HTTP 422 = foto chegou, QR ilegível; NÃO contabilizar.
+
+  3. O contadorLote do Node é local e volátil; o backend mantém o contador
+     oficial do lote/requisição no banco de dados.
+
+  4. Idempotência: mesma etiqueta pode ser lida várias vezes seguidas porque
+     a câmera aponta para o mesmo QR; defina política (ex.: ignorar repetição
+     do mesmo tag_code por X segundos no mesmo request_id).
+
+  5. Associar contexto: o microsserviço não sabe qual pedido/lote o operador
+     está separando. O backend deve amarrar a leitura ao request_id / lote_id
+     da sessão ativa do operador no app (estado no backend ou token JWT).
+
+  6. Rede: ESP32 e Node devem estar na mesma LAN WiFi. O backend principal
+     pode estar na nuvem; o webhook (estratégia A) resolve o salto LAN → internet.
+
+================================================================================
+10. EXEMPLO DE IMPLEMENTAÇÃO NO BACKEND PRINCIPAL (PSEUDOCÓDIGO)
+================================================================================
+
+// Endpoint receptor (você cria)
+POST /api/integrations/esp32/reading-confirmed
+
+async function handleReadingConfirmed(req, res) {
+  const { success, qr_data, read_at, source } = req.body;
+
+  if (!success) return res.status(400).json({ error: 'success must be true' });
+  if (!qr_data) return res.status(400).json({ error: 'qr_data required' });
+
+  let tagCode;
+  try {
+    const parsed = JSON.parse(qr_data);
+    tagCode = parsed.tag_code ?? qr_data;
+  } catch {
+    tagCode = qr_data;
+  }
+
+  const session = await getActiveSeparationSession(req.user); // seu domínio
+  if (!session) return res.status(409).json({ error: 'No active request' });
+
+  if (await isDuplicateRead(session.request_id, tagCode, windowSec: 3)) {
+    return res.json({ accepted: true, duplicate: true });
+  }
+
+  await registerSuccessfulReading({
+    request_id: session.request_id,
+    tag_code: tagCode,
+    read_at: read_at ?? new Date().toISOString(),
+    source: source ?? 'esp32-cam-integrador'
+  });
+
+  return res.json({ accepted: true, tag_code: tagCode });
+}
+
+================================================================================
+11. CHECKLIST PARA O AGENTE DE IA DO BACKEND
+================================================================================
+
+[ ] Criar endpoint seguro para receber confirmação (webhook estratégia A).
+[ ] Autenticar chamadas (API key ou JWT de serviço).
+[ ] Parsear qr_data e extrair tag_code.
+[ ] Vincular leitura ao request_id/lote da sessão ativa do operador.
+[ ] Implementar idempotência anti-leitura duplicada (janela 2–3 s).
+[ ] Persistir apenas quando success=true; ignorar falhas 422.
+[ ] NÃO exigir que o ESP32 chame seu backend diretamente.
+[ ] NÃO depender de GET /api/status em produção.
+[ ] Coordenar com equipe do microsserviço para inserir o POST webhook após
+    linha 203 de contagem_etiquetas/src/server.js.
+[ ] Documentar URL e credenciais em variáveis de ambiente em ambos os lados.
+
+================================================================================
+12. RESUMO EM UMA FRASE PARA O AGENTE
+================================================================================
+
+O microsserviço Node na porta 3000 recebe fotos do ESP32, decodifica QR com
+jimp/jsqr e, quando bem-sucedido, define success=true e qr_data na resposta de
+POST /scan-image enquanto incrementa contadorLote em RAM (linhas 202–210 de
+server.js). O backend principal deve receber essa confirmação via webhook
+push nesse momento de sucesso, parsear tag_code de qr_data, e registrar a
+separação no banco com idempotência — sem falar com o ESP32 e sem usar banco
+no microsserviço.
+
+================================================================================
+FIM DO DOCUMENTO
+================================================================================

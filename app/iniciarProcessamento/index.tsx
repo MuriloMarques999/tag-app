@@ -3,6 +3,7 @@ import { styles } from './iniciarProcessamento';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
+import { getEsp32Status } from '../api';
 
 export default function IniciarProcessamento() {
 
@@ -19,8 +20,9 @@ export default function IniciarProcessamento() {
   const quantidadeTotal = 25;
   const [contador, setContador] = useState(0);
   const [finalizado, setFinalizado] = useState(false);
-  const [acertos, setAcertos] = useState(Math.floor(Math.random() * 25));
+  const [acertos, setAcertos] = useState(0);
   const [erros, setErros] = useState(0);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   // cronômetro
   useEffect(() => {
@@ -34,6 +36,40 @@ export default function IniciarProcessamento() {
 
     return () => clearInterval(interval);
   }, [rodando]);
+
+  useEffect(() => {
+    let statusInterval: any;
+
+    async function fetchEsp32Status() {
+      try {
+        const data: any = await getEsp32Status();
+        if (data && typeof data.contador === 'number') {
+          setContador(data.contador);
+          setAcertos(Math.min(data.contador, quantidadeTotal));
+          setStatusError(null);
+        } else {
+          setStatusError('Microserviço ESP32 respondendo sem contador');
+        }
+      } catch (error: any) {
+        setStatusError('Microserviço ESP32 inacessível');
+      }
+    }
+
+    if (rodando) {
+      fetchEsp32Status();
+      statusInterval = setInterval(fetchEsp32Status, 1000);
+    }
+
+    return () => clearInterval(statusInterval);
+  }, [rodando]);
+
+  useEffect(() => {
+    if (rodando && contador >= quantidadeTotal) {
+      setRodando(false);
+      setFinalizado(true);
+      setErros(Math.max(0, quantidadeTotal - acertos));
+    }
+  }, [contador, rodando, quantidadeTotal, acertos]);
 
   const formatarTempo = (segundos: number) => {
     const min = Math.floor(segundos / 60);
@@ -174,6 +210,8 @@ export default function IniciarProcessamento() {
 
       {/* Contador */}
       <Text style={styles.counter}>{contador}/{quantidadeTotal}</Text>
+
+      {statusError ? <Text style={styles.errorText}>{statusError}</Text> : null}
 
       {/* Botão */}
       <TouchableOpacity 

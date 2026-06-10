@@ -79,6 +79,14 @@ export const styles = StyleSheet.create({
     fontFamily: 'PoppinsSemiBold',
   },
 
+  errorText: {
+    textAlign: 'center',
+    color: '#C0392B',
+    fontSize: 14,
+    fontFamily: 'Poppins',
+    marginBottom: 12,
+  },
+
   messageContainer: {
     flex: 1,
     justifyContent: 'center',

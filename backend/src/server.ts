@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mockRoutes from './mockRoutes';
 import { errorHandler } from './middleware/errorHandler';
+import { ensureEsp32IntegrationTable } from './initDb';
 
 dotenv.config();
 
@@ -19,17 +20,31 @@ if (process.env.MOCK === 'true' || process.env.MOCK === '1') {
   const requestRoutes = require('./routes/requests').default;
   const readingRoutes = require('./routes/readings').default;
   const deviceRoutes = require('./routes/devices').default;
+  const integrationsRoutes = require('./routes/integrations').default;
 
   app.use('/api/auth', authRoutes);
   app.use('/api/tags', tagRoutes);
   app.use('/api/requests', requestRoutes);
   app.use('/api/readings', readingRoutes);
   app.use('/api/devices', deviceRoutes);
+  app.use('/api/integrations', integrationsRoutes);
 }
 
 app.use(errorHandler);
 
 const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => {
-  console.log(`Backend rodando em http://localhost:${port}`);
+
+async function start() {
+  if (!(process.env.MOCK === 'true' || process.env.MOCK === '1')) {
+    await ensureEsp32IntegrationTable();
+  }
+
+  app.listen(port, () => {
+    console.log(`Backend rodando em http://localhost:${port}`);
+  });
+}
+
+start().catch((error) => {
+  console.error('Erro ao iniciar o backend:', error);
+  process.exit(1);
 });
