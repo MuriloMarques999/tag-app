@@ -36,7 +36,7 @@ const port = Number(process.env.PORT ?? 4000);
 
 async function start() {
   if (!(process.env.MOCK === 'true' || process.env.MOCK === '1')) {
-    await ensureEsp32IntegrationTable();
+    await ensureDatabaseTables();
   }
 
   app.listen(port, () => {

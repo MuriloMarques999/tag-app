@@ -1,0 +1,13 @@
+@echo off
+echo Iniciando Tag App - Todos os servicos...
+
+echo Iniciando Backend...
+start "TagApp Backend" cmd /k "cd backend && npm run dev"
+
+echo Iniciando Microsservico ESP32...
+start "TagApp ESP32" cmd /k "cd servico_esp32CAM_integrador-main\contagem_etiquetas && npm start"
+
+echo Iniciando Frontend (Expo)...
+start "TagApp Frontend" cmd /k "npm start"
+
+echo Todos os servicos foram iniciados em janelas separadas.
