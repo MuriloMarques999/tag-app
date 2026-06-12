@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:4000';
+const BASE_URL = 'http://10.126.132.226:4000';
 
 let _token: string | null = null;
 export function setToken(t: string | null) {
@@ -25,7 +25,7 @@ async function requestRaw(url: string, opts: RequestInit = {}) {
 }
 
 export async function getEsp32Status() {
-  return requestRaw('http://localhost:3000/api/status');
+  return requestRaw('http://10.126.132.226:3000/api/status');
 }
 
 export async function login(email: string, password: string) {
