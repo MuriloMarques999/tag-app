@@ -7,7 +7,7 @@ router.use(authMiddleware);
 
 router.get('/', async (req, res) => {
   const [rows] = await pool.query(
-    `SELECT r.*, u.name as operator_name, COUNT(ri.item_id) as total_items
+    `SELECT r.*, COALESCE(r.custom_operator_name, u.name) as operator_name, SUM(ri.quantity_requested) as total_items
      FROM requests r
      LEFT JOIN users u ON r.operator_id = u.user_id
      LEFT JOIN request_items ri ON ri.request_id = r.request_id
@@ -27,9 +27,9 @@ router.get('/:requestId', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { reference_code, operator_id, status = 'pending', items } = req.body;
-  if (!reference_code || !operator_id || !items || !Array.isArray(items)) {
-    return res.status(400).json({ message: 'reference_code, operator_id e items são obrigatórios' });
+  const { reference_code, operator_id, custom_operator_name, status = 'pending', items } = req.body;
+  if (!reference_code || (!operator_id && !custom_operator_name) || !items || !Array.isArray(items)) {
+    return res.status(400).json({ message: 'reference_code, (operator_id ou custom_operator_name) e items são obrigatórios' });
   }
 
   const [existing] = await pool.query('SELECT request_id FROM requests WHERE reference_code = ?', [reference_code]);
@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
     return res.status(409).json({ message: 'Código de requisição já existe' });
   }
 
-  const [result] = await pool.query('INSERT INTO requests (reference_code, operator_id, status) VALUES (?, ?, ?)', [reference_code, operator_id, status]);
+  const [result] = await pool.query('INSERT INTO requests (reference_code, operator_id, custom_operator_name, status) VALUES (?, ?, ?, ?)', [reference_code, operator_id || null, custom_operator_name || null, status]);
   const requestId = (result as any).insertId;
 
   for (const item of items) {

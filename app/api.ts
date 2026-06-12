@@ -48,4 +48,16 @@ export async function getTags() {
   return request('/api/tags');
 }
 
-export default { setToken, logout, login, register, getRequests, getRequest, getTags, getEsp32Status };
+export async function createRequest(data: { reference_code: string; operator_id?: number | null; custom_operator_name?: string; items: { tag_id: number; quantity_requested: number }[]; status?: string }) {
+  return request('/api/requests', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateRequestStatus(requestId: number, status: string) {
+  return request(`/api/requests/${requestId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+}
+
+export async function getOperators() {
+  return request('/api/users/operators');
+}
+
+export default { setToken, logout, login, register, getRequests, getRequest, getTags, getEsp32Status, createRequest, updateRequestStatus, getOperators };

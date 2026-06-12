@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mockRoutes from './mockRoutes';
 import { errorHandler } from './middleware/errorHandler';
-import { ensureEsp32IntegrationTable } from './initDb';
+import { ensureDatabaseTables } from './initDb';
 
 dotenv.config();
 
@@ -21,6 +21,7 @@ if (process.env.MOCK === 'true' || process.env.MOCK === '1') {
   const readingRoutes = require('./routes/readings').default;
   const deviceRoutes = require('./routes/devices').default;
   const integrationsRoutes = require('./routes/integrations').default;
+  const usersRoutes = require('./routes/users').default;
 
   app.use('/api/auth', authRoutes);
   app.use('/api/tags', tagRoutes);
@@ -28,6 +29,7 @@ if (process.env.MOCK === 'true' || process.env.MOCK === '1') {
   app.use('/api/readings', readingRoutes);
   app.use('/api/devices', deviceRoutes);
   app.use('/api/integrations', integrationsRoutes);
+  app.use('/api/users', usersRoutes);
 }
 
 app.use(errorHandler);
@@ -36,7 +38,12 @@ const port = Number(process.env.PORT ?? 4000);
 
 async function start() {
   if (!(process.env.MOCK === 'true' || process.env.MOCK === '1')) {
-    await ensureDatabaseTables();
+    try {
+      await ensureDatabaseTables();
+      console.log('Tabelas do banco de dados verificadas/criadas com sucesso.');
+    } catch (dbError) {
+      console.error('Erro ao criar tabelas do banco de dados:', dbError);
+    }
   }
 
   app.listen(port, () => {

@@ -1,12 +1,12 @@
 // tela de Login do Operador 
 
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, ImageStyle } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, ImageStyle, Alert } from 'react-native';
 import { styles } from './stylesOperator';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useState } from 'react'; // importando para utilizar 
 import { Ionicons } from '@expo/vector-icons'; // para icons
-
+import api, { setToken } from '../api';
 
 export default function Operator() {
 
@@ -16,12 +16,34 @@ export default function Operator() {
         PoppinsSemiBold: require('../../assets/fonts/Poppins-SemiBold.ttf'),
          });
     
-        if (!fontsLoaded) {
-        return null;
-        }
         const router = useRouter();
     
         const [mostrarSenha, setMostrarSenha] = useState(false); // para mostrar a senha
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [loading, setLoading] = useState(false);
+
+        if (!fontsLoaded) {
+        return null;
+        }
+
+    const handleLogin = async () => {
+        try {
+            setLoading(true);
+            const res: any = await api.login(email, password);
+            if (res.token) {
+                setToken(res.token);
+                // Redirecionar operador para a tela de lotes
+                router.replace('/lotesAgendados');
+            } else {
+                Alert.alert('Erro', res.message || 'Falha no login');
+            }
+        } catch (err: any) {
+            Alert.alert('Erro', err.message || 'Ocorreu um erro de comunicação');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -47,7 +69,12 @@ export default function Operator() {
             <Text style={styles.titleFormInput}>Email</Text>
             <TextInput 
             style={styles.formInput} 
-            placeholder='Ex.:name@company.com'/>
+            placeholder='Ex.:name@company.com'
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            />
         </View>
 
         <View style={styles.inputGroup}>
@@ -58,6 +85,8 @@ export default function Operator() {
                     style={styles.formInput} 
                     placeholder='Ex.: Digite sua senha'
                     secureTextEntry={!mostrarSenha}
+                    value={password}
+                    onChangeText={setPassword}
                 />
                 <TouchableOpacity
                     style={styles.icon}
@@ -74,8 +103,8 @@ export default function Operator() {
         </View>
         </ScrollView>
 
-        <TouchableOpacity style={styles.buttonCreate} onPress={() => router.push('/lotesAgendados')}>
-            <Text style={styles.buttonFont}>Login</Text>
+        <TouchableOpacity style={styles.buttonCreate} onPress={handleLogin} disabled={loading}>
+            <Text style={styles.buttonFont}>{loading ? 'Entrando...' : 'Login'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.backButton} onPress={() => router.push('/') }>
             <Text style={styles.backButtonFont}>Back</Text>

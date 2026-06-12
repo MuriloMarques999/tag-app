@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { styles } from './iniciarProcessamento';
 import { useFonts } from 'expo-font';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { getEsp32Status } from '../api';
+import { getEsp32Status, updateRequestStatus } from '../api';
 
 export default function IniciarProcessamento() {
 
@@ -13,11 +13,16 @@ export default function IniciarProcessamento() {
   });
 
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const rawQuantidade = params.quantidade ? Number(params.quantidade) : 0;
+  const idLote = params.idLote ? String(params.idLote) : 'Desconhecido';
+  const requestId = params.requestId ? Number(params.requestId) : 0;
+  const operatorName = params.operatorName ? String(params.operatorName) : 'Não atribuído';
 
   // estados
   const [tempo, setTempo] = useState(0);
   const [rodando, setRodando] = useState(false);
-  const quantidadeTotal = 25;
+  const quantidadeTotal = rawQuantidade || 25;
   const [contador, setContador] = useState(0);
   const [finalizado, setFinalizado] = useState(false);
   const [acertos, setAcertos] = useState(0);
@@ -77,10 +82,17 @@ export default function IniciarProcessamento() {
     return `${min}:${seg < 10 ? '0' : ''}${seg}`;
   };
 
-  const handleBotaoPrincipal = () => {
+  const handleBotaoPrincipal = async () => {
     if (!rodando && !finalizado) {
       // Começar
       setRodando(true);
+      if (requestId) {
+        try {
+          await updateRequestStatus(requestId, 'processing');
+        } catch (error) {
+          console.error('Erro ao atualizar status:', error);
+        }
+      }
     } else if (rodando) {
       // Finalizar
       setRodando(false);
@@ -89,10 +101,18 @@ export default function IniciarProcessamento() {
     }
   };
 
-  const handleEnviarRelatorio = () => {
-    // Aqui você pode implementar a lógica para enviar o relatório
-    console.log('Relatório enviado');
-    // Após enviar, pode navegar ou mostrar uma mensagem de sucesso
+  const handleEnviarRelatorio = async () => {
+    if (requestId) {
+      try {
+        await updateRequestStatus(requestId, 'completed');
+        Alert.alert('Sucesso', 'Relatório enviado com sucesso!');
+        router.push('/lotesAgendados');
+      } catch (error) {
+        Alert.alert('Erro', 'Não foi possível enviar o relatório.');
+      }
+    } else {
+      Alert.alert('Erro', 'ID do lote não encontrado.');
+    }
   };
 
   const handleVoltar = () => {
@@ -187,19 +207,19 @@ export default function IniciarProcessamento() {
 
         <TextInput
           style={styles.input}
-          value="Operador: Anne Carlini"
+          value={`Operador: ${operatorName}`}
           editable={false}
         />
 
         <TextInput
           style={styles.input}
-          value="ID Lote: ET123"
+          value={`ID Lote: ${idLote}`}
           editable={false}
         />
 
         <TextInput
           style={styles.input}
-          value="Quantidade total: 25"
+          value={`Quantidade total: ${quantidadeTotal}`}
           editable={false}
         />
 

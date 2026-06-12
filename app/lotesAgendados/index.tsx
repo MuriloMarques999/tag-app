@@ -51,19 +51,18 @@ export default function LotesAgendados() {
 
             {/* FAIXA SUPERIOR */}
             <View style={styles.cardHeader}>
-              <Text style={styles.ref}>Ref. Lote: {lote.ref}</Text>
+              <Text style={styles.ref}>Ref. Lote: {lote.reference_code || lote.ref}</Text>
             </View>
 
             {/* CONTEÚDO */}
             <View style={styles.cardContent}>
               <View>
-                <Text style={styles.text}>Ref: {lote.reference_code || lote.ref}</Text>
                 <Text style={styles.text}>Itens: {lote.total_items ?? '—'}</Text>
                 <Text style={styles.text}>Status: {lote.status}</Text>
               </View>
 
               {/* BOTÃO SETA */}
-              <TouchableOpacity style={styles.arrowButton} onPress={() => router.push('/iniciarProcessamento')}>
+              <TouchableOpacity style={styles.arrowButton} onPress={() => router.push({ pathname: '/iniciarProcessamento', params: { requestId: lote.request_id, quantidade: lote.total_items, idLote: lote.reference_code || lote.ref, operatorName: lote.operator_name } })}>
                 <Text style={styles.arrowText}>→</Text>
               </TouchableOpacity>
 
