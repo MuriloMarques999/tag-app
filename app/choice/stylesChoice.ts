@@ -4,82 +4,83 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#DDD7C9',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 24,
+    alignItems: 'center',
   },
+
   centerContent: {
-        flex: 1, 
-        alignItems: 'center', // alinha horizontalmente
-        justifyContent: 'center', // alinha verticalmente
-    },
-    logotipo: {
-        width: 130, 
-        height: 130,
-        resizeMode: 'contain', // não corta a imagem com contain
-        marginBottom: 5,
-    }, 
-    naming: {
-        fontSize: 20,
-        fontFamily: 'Notable',
-        paddingBottom: 100, 
-        color: '#003f48'
-    }, 
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+  },
 
-    ctaInfo: {
-        position: 'absolute',
-        bottom: 200, 
-        left: 0, 
-        right: 0, 
+  logotipo: {
+    width: 130,
+    height: 130,
+    resizeMode: 'contain',
+    marginBottom: 12,
+    maxWidth: 180,
+    maxHeight: 180,
+  },
 
-        paddingLeft: 35,
-        paddingRight: 35,
-        textAlign: 'center',
-        fontSize: 16,
-        color: '#003f48',
-        fontFamily: 'Poppins',
-    },
+  naming: {
+    fontSize: 24,
+    fontFamily: 'Notable',
+    color: '#003f48',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
 
-    buttonFont: {
-        fontSize: 20,
-        fontFamily: 'PoppinsSemiBold', 
-        color: '#DDD7C9',
-    },
+  ctaInfo: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#003f48',
+    fontFamily: 'Poppins',
+    paddingHorizontal: 16,
+    marginBottom: 32,
+  },
 
-    buttonEmpresa: {
-        position: 'absolute',
-        bottom: 140,
-        width: 358,
-        height: 40,
-        backgroundColor: '#003f48',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20,
-        alignSelf: 'center',
-    }, 
+  buttonFont: {
+    fontSize: 20,
+    fontFamily: 'PoppinsSemiBold',
+    color: '#DDD7C9',
+  },
 
-    buttonOperador: {
-        position: 'absolute',
-        bottom: 80,
-        width: 358,
-        height: 40,
-        backgroundColor: '#003f48',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20,
-        alignSelf: 'center',
-    }, 
+  buttonEmpresa: {
+    width: '100%',
+    maxWidth: 420,
+    height: 50,
+    backgroundColor: '#003f48',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+    marginBottom: 16,
+  },
 
-    backButton: {
-        position: 'absolute',
-        bottom: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        alignSelf: 'center',
-    }, 
+  buttonOperador: {
+    width: '100%',
+    maxWidth: 420,
+    height: 50,
+    backgroundColor: '#003f48',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+    marginBottom: 16,
+  },
 
-    backButtonFont: {
-        fontSize: 20,
-        fontFamily: 'PoppinsSemiBold', 
-        color: '#003f48',
-    },
+  backButton: {
+    width: '100%',
+    maxWidth: 420,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
-
+  backButtonFont: {
+    fontSize: 20,
+    fontFamily: 'PoppinsSemiBold',
+    color: '#003f48',
+  },
 });

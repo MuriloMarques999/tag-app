@@ -87,6 +87,17 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+app.post('/api/reset', (req, res) => {
+  contadorLote = 0;
+  ultimoQrLido = '(aguardando leitura)';
+  ultimaImagemBase64 = null;
+  res.json({
+    success: true,
+    contador: contadorLote,
+    message: 'Contador do lote resetado'
+  });
+});
+
 // --- Dashboard de calibração e monitoramento ---
 app.get('/dashboard', (req, res) => {
   res.type('html').send(`<!DOCTYPE html>

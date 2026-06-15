@@ -4,149 +4,142 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#DDD7C9',
+    paddingHorizontal: 20,
+    paddingTop: 36,
+    paddingBottom: 24,
+    alignItems: 'center',
   },
+
+  title: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 420,
+    minHeight: 56,
+    borderColor: '#003f48',
+    borderRadius: 20,
+    borderWidth: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    justifyContent: 'center',
+    marginBottom: 24,
+    backgroundColor: 'rgba(0, 62, 72, 0.12)',
+  },
+
+  titleFont: {
+    color: '#0A171D',
+    fontSize: 20,
+    fontFamily: 'Poppins-SemiBold',
+  },
+
+  centerContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+
+  logotipo: {
+    width: 130,
+    height: 130,
+    resizeMode: 'contain',
+    marginBottom: 12,
+    maxWidth: 180,
+    maxHeight: 180,
+  },
+
+  naming: {
+    fontSize: 24,
+    fontFamily: 'Notable',
+    color: '#003f48',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+
+  subTitle: {
+    textAlign: 'center',
+    fontSize: 24,
+    fontFamily: 'Poppins-SemiBold',
+    marginBottom: 16,
+  },
+
   ctaInfo: {
-        position: 'absolute',
-        top: 180, 
-        left: 0, 
-        right: 0, 
+    textAlign: 'center',
+    color: '#003f48',
+    fontFamily: 'Poppins',
+    fontSize: 16,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
 
-        paddingLeft: 35,
-        paddingRight: 35,
-        textAlign: 'center',
-        fontSize: 16,
-        color: '#003f48',
-        fontFamily: 'Poppins',
-    },
-    subTitle: {
-        position: 'absolute',
-        top: 320,
-        left: 0, 
-        right: 0, 
+  titleFormInput: {
+    fontFamily: 'Poppins',
+    fontSize: 16,
+    color: '#0A171D',
+    marginBottom: 8,
+  },
 
-        paddingLeft: 35, 
-        paddingRight: 35, 
-        textAlign: 'center', 
-        fontSize: 24, 
-        fontFamily: 'Poppins-SemiBold'
-    }, 
+  formInput: {
+    width: '100%',
+    maxWidth: 420,
+    height: 48,
+    backgroundColor: '#FEF6E9',
+    borderRadius: 10,
+    marginTop: 8,
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingTop: 2,
+    paddingBottom: 2,
+  },
 
-    title: {
-        position: 'absolute',
-        top: 50,
+  formContainer: {
+    width: '100%',
+    maxWidth: 420,
+  },
 
-        alignSelf: 'center',
-        
-        alignItems: 'center', // alinha o texto
-        justifyContent: 'center', // alinha o texto
+  inputGroup: {
+    marginBottom: 16,
+  },
 
-        width: 358, 
-        height: 40, 
-        borderColor: '#003f48',
-        borderRadius: 20, 
-        borderWidth: 2,
-        paddingRight: 35, 
-        paddingLeft: 35,
-        backgroundColor: 'rgba(0, 62, 72, 0.12)',
-    },
+  buttonCreate: {
+    width: '100%',
+    maxWidth: 420,
+    height: 50,
+    backgroundColor: '#003f48',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+    marginTop: 16,
+  },
 
-    titleFont: {
-        color: '#0A171D', 
-        fontSize: 20, 
-        fontFamily: 'Poppins-SemiBold',
-    }, 
+  buttonFont: {
+    color: '#DDD7C9',
+    fontSize: 20,
+    fontFamily: 'PoppinsSemiBold',
+  },
 
+  backButton: {
+    width: '100%',
+    maxWidth: 420,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+  },
 
-    titleFormInput: {
-        fontFamily: 'Poppins-Regular',
-        fontSize: 16,
-        color:'#0A171D', 
-        left: 5,
-    },
-    formInput: {
-        width: 358, 
-        height: 40, 
-        backgroundColor: '#FEF6E9',
-        borderRadius: 10, 
-        marginTop: 8,
-        paddingLeft: 16,
-        paddingRight: 16, 
-        paddingTop: 2,
-        paddingBottom: 2,
-    }, 
+  backButtonFont: {
+    fontSize: 20,
+    fontFamily: 'PoppinsSemiBold',
+    color: '#003f48',
+  },
 
-    formContainer: {
-        paddingTop: 400, 
-        paddingHorizontal: 16,
-        paddingBottom: 40,
-    }, 
+  inputWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
 
-    inputGroup: {
-        marginBottom: 16, 
-    }, 
-
-    buttonCreate: {
-        position: 'absolute',
-        bottom: 100,
-        width: 358,
-        height: 40,
-        backgroundColor: '#003f48',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20,
-        alignSelf: 'center',
-    },
-
-    buttonFont: {
-        fontSize: 20,
-        fontFamily: 'PoppinsSemiBold', 
-        color: '#DDD7C9',
-    },
-    backButton: {
-        position: 'absolute',
-        bottom: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        alignSelf: 'center',
-    }, 
-
-    backButtonFont: {
-        fontSize: 20,
-        fontFamily: 'PoppinsSemiBold', 
-        color: '#003f48',
-    },
-
-    inputWrapper: {
-        position: 'relative',
-        justifyContent: 'center',
-    }, 
-
-    icon: {
-        position: 'absolute',
-        right: 16,
-        height: '100%',
-        justifyContent: 'center',
-    },
-
-    centerContent: {
-        position: 'absolute',
-        top: 150,
-        left: 0,
-        right: 0,
-        alignItems: 'center', // alinha horizontalmente
-        justifyContent: 'center', // alinha verticalmente
-    },
-    logotipo: {
-        width: 75, 
-        height: 75,
-        resizeMode: 'contain', // não corta a imagem com contain
-        marginBottom: 5,
-    }, 
-    naming: {
-        fontSize: 20,
-        fontFamily: 'Notable',
-        paddingBottom: 100, 
-        color: '#003f48'
-    }, 
-
-})
+  icon: {
+    position: 'absolute',
+    right: 16,
+    height: '100%',
+    justifyContent: 'center',
+  },
+});

@@ -28,6 +28,10 @@ export async function getEsp32Status() {
   return requestRaw('http://10.126.132.226:3000/api/status');
 }
 
+export async function resetEsp32Counter() {
+  return requestRaw('http://10.126.132.226:3000/api/reset', { method: 'POST' });
+}
+
 export async function login(email: string, password: string) {
   return request('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }

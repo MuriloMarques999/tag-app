@@ -3,7 +3,7 @@ import { styles } from './iniciarProcessamento';
 import { useFonts } from 'expo-font';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { getEsp32Status, updateRequestStatus } from '../api';
+import { getEsp32Status, resetEsp32Counter, updateRequestStatus } from '../api';
 
 export default function IniciarProcessamento() {
 
@@ -28,6 +28,19 @@ export default function IniciarProcessamento() {
   const [acertos, setAcertos] = useState(0);
   const [erros, setErros] = useState(0);
   const [statusError, setStatusError] = useState<string | null>(null);
+
+  // resetar contador do ESP ao iniciar novo lote
+  useEffect(() => {
+    async function resetLoteCounter() {
+      try {
+        await resetEsp32Counter();
+      } catch (error) {
+        console.warn('Não foi possível resetar contador ESP32:', error);
+      }
+    }
+
+    resetLoteCounter();
+  }, [requestId]);
 
   // cronômetro
   useEffect(() => {
